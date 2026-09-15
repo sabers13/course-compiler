@@ -1,0 +1,20 @@
+{
+  "name": "course-compiler-local",
+  "interface": {
+    "displayName": "Course Compiler Local"
+  },
+  "plugins": [
+    {
+      "name": "course-compiler",
+      "source": {
+        "source": "local",
+        "path": "./local-artifacts/plugin-package/course-compiler"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Education"
+    }
+  ]
+}

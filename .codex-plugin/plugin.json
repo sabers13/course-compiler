@@ -1,0 +1,24 @@
+{
+  "name": "course-compiler",
+  "version": "0.1.0",
+  "description": "Build a validated, exam-ready study course from private source PDFs.",
+  "author": {
+    "name": "Course Compiler"
+  },
+  "skills": "./skills/",
+  "apps": "./.app.json",
+  "interface": {
+    "displayName": "Course Compiler",
+    "shortDescription": "Build an exam-ready course from source PDFs",
+    "longDescription": "Turn private course sources into an exam-oriented, semantically validated study PDF through a persisted Course Compiler workflow.",
+    "developerName": "Course Compiler",
+    "category": "Education",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Build an exam-ready study course from my source PDFs."
+    ]
+  }
+}

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Course Compiler</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" aria-label="Primary">
+    <div class="brand"><span class="mark">C</span> Course Compiler</div>
+    <nav class="nav" aria-label="Workspace">
+      <div class="nav-label">Workspace</div>
+      <button class="active" aria-current="page">Home</button>
+      <button id="nav-new-course">New Course</button>
+      <div class="nav-label">Account</div>
+      <button disabled title="Settings arrive in a later slice (post-v0.1)">Settings</button>
+    </nav>
+    <div class="spacer"></div>
+    <div class="user"><b>Local workspace</b>127.0.0.1 • single-user</div>
+  </aside>
+  <main class="main">
+    <header class="topbar"><div class="crumb"><b>Home</b></div></header>
+    <section class="page" aria-labelledby="courses-heading">
+      <div class="title-row">
+        <div>
+          <div class="eyebrow">Study workspace</div>
+          <h1 id="courses-heading">Your courses</h1>
+          <p class="lede">Your course material, saved progress, and finished study documents in one quiet place.</p>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="secondary" id="refresh-btn">Refresh</button>
+          <button class="action" id="new-course-btn">+ New Course</button>
+        </div>
+      </div>
+      <div id="course-list" class="course-grid" aria-live="polite"></div>
+      <div class="empty" id="empty-state" data-testid="empty-state">
+        <div class="eyebrow">Empty workspace</div>
+        <h2>No courses yet</h2>
+        <p>Create your first course to get started. Your courses and progress will appear here.</p>
+      </div>
+      <div class="card-surface" style="margin-top:18px" id="status-card">
+        <div class="eyebrow">Local application</div>
+        <p class="lede" style="margin-top:6px">This is the Course Compiler app running on localhost. Courses are durably saved in SQLite and survive refresh and restart.</p>
+      </div>
+      <dialog id="new-course-dialog" style="border:1px solid var(--border);border-radius:12px;padding:20px;max-width:420px;width:90%">
+        <form method="dialog" id="new-course-form">
+          <div class="eyebrow">New course</div>
+          <h3 style="margin:6px 0 12px">Create course</h3>
+          <label>Course guidance (optional)<br><textarea id="course-guidance" rows="4" style="width:100%" placeholder="Which sources to prioritize, coverage, exercises or course conventions"></textarea></label>
+          <label style="display:block;margin-bottom:10px">Title<br><input id="course-title" required maxlength="200" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px" placeholder="e.g. Advanced Algorithms"></label>
+          <div style="display:flex;gap:12px;margin-bottom:10px">
+            <label style="flex:1">AI mode<br><select id="course-ai" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px"><option value="gpt">gpt</option><option value="byok" disabled>byok (post-v0.1)</option></select></label>
+            <label style="flex:1">Quality<br><select id="course-quality" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px"><option value="fast">fast</option><option value="review">review</option></select></label>
+          </div>
+          <p class="muted" style="margin:0 0 10px">GPT-only in v0.1. BYOK arrives post-v0.1.</p>
+          <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px">
+            <button type="button" class="secondary" id="dialog-cancel">Cancel</button>
+            <button type="submit" class="action">Create</button>
+          </div>
+          <p id="dialog-error" class="muted" style="display:none;color:var(--red);margin-top:8px"></p>
+        </form>
+      </dialog>
+      <dialog id="gpt-relay-dialog" style="border:1px solid var(--border);border-radius:12px;padding:20px;max-width:640px;width:92%">
+        <div class="eyebrow">GPT low-turn relay</div>
+        <h3 id="gpt-relay-title" style="margin:6px 0 4px">Continue in ChatGPT</h3>
+        <p class="muted" style="margin:0 0 12px">
+          This is a browser-mediated relay; it does not automatically message ChatGPT or
+          transfer attachments. Follow this exact sequence: <strong>1.</strong> copy the prompt;
+          <strong>2.</strong> download only the current evidence listed below;
+          <strong>3.</strong> open a fresh ChatGPT conversation;
+          <strong>4.</strong> attach only those current files;
+          <strong>5.</strong> paste the prompt; <strong>6.</strong> paste ChatGPT's Markdown response back here.
+        </p>
+        <div id="gpt-relay-status" class="muted" style="margin-bottom:8px"></div>
+        <div id="gpt-relay-body" style="display:none">
+          <label style="display:block;margin-bottom:8px">Prompt (copy this into a fresh ChatGPT conversation)<br>
+            <textarea id="gpt-relay-handoff" readonly rows="8" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-family:monospace;font-size:12px"></textarea>
+          </label>
+          <div style="display:flex;gap:10px;margin-bottom:12px">
+            <button type="button" class="secondary" id="gpt-relay-copy">Copy prompt</button>
+            <button type="button" class="secondary" id="gpt-relay-open-chatgpt">Open ChatGPT (no transfer)</button>
+          </div>
+          <div class="eyebrow">Evidence for this turn</div>
+          <ul id="gpt-relay-evidence" style="margin:6px 0 12px;padding-left:18px"></ul>
+          <label style="display:block;margin-bottom:8px">Paste the assessment, plan or lecture Markdown<br>
+            <textarea id="gpt-relay-result" rows="8" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-family:monospace;font-size:12px" placeholder="Paste semantic content here. You may edit it before submitting."></textarea>
+          </label>
+          <p id="gpt-relay-error" class="muted" style="display:none;color:var(--red);margin-top:4px"></p>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px">
+          <button type="button" class="secondary" id="gpt-relay-close">Close</button>
+          <button type="button" class="action" id="gpt-relay-submit" disabled>Submit result</button>
+        </div>
+      </dialog>
+    </section>
+  </main>
+</div>
+<script src="/static/app.js"></script>
+</body>
+</html>

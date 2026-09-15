@@ -1,0 +1,76 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{fontspec}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\newsavebox{\ccmathbox}
+\newcommand{\ccfitmath}[1]{%
+  \sbox{\ccmathbox}{$\displaystyle #1$}%
+  \ifdim\wd\ccmathbox>1.25\linewidth
+    \PackageError{coursecompiler}{Formula requires explicit line breaks}{}%
+  \else
+    \ifdim\wd\ccmathbox>\linewidth
+      \resizebox{\linewidth}{!}{\usebox{\ccmathbox}}%
+    \else\usebox{\ccmathbox}\fi
+  \fi}
+% Standalone inline math stays inline text math: render unchanged when it
+% fits, bounded-resize (1.25 policy) when modestly oversized, otherwise
+% break locally at relations/binops. Punctuation travels as #2, outside
+% the math. Genuinely indivisible content still fails via overflow checks.
+\newcommand{\ccfitinline}[2]{%
+  \par\noindent
+  \sbox{\ccmathbox}{\(#1\)#2}%
+  \ifdim\wd\ccmathbox>\linewidth
+    \ifdim\wd\ccmathbox>1.25\linewidth
+      \begingroup\relpenalty=0\binoppenalty=0\(#1\)#2\endgroup
+    \else
+      \resizebox{\linewidth}{!}{\usebox{\ccmathbox}}%
+    \fi
+  \else\usebox{\ccmathbox}\fi}
+
+\usepackage{unicode-math}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{fvextra}
+\usepackage{upquote}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{setspace}
+\usepackage{parskip}
+\usepackage{needspace}
+\usepackage{array,tabularx}
+\setmainfont{Latin Modern Roman}
+\setmonofont{Noto Sans Mono}
+\setmathfont{Latin Modern Math}
+% Fallback flexibility for paragraphs containing several inline-code
+% identifiers. Kept at the long-standing 4em value; the l9/l11 failure
+% class is addressed by targeted breakpoints inside inline-code spans
+% rather than by loosening every paragraph globally. Applies only after
+% normal line-breaking has failed.
+\setlength{\emergencystretch}{4em}
+\widowpenalty=10000
+\clubpenalty=10000
+\displaywidowpenalty=10000
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+\setlist[itemize]{leftmargin=2em}
+\setlist[enumerate]{leftmargin=2.5em}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+% ``samepage`` still permits a break immediately before display math.  A
+% minipage is a real indivisible vertical box, so short explanatory text,
+% headings, and the equations they introduce cannot be separated.
+\newenvironment{keeptogether}
+  {\par\noindent\begin{minipage}{\linewidth}%
+   \setlength{\parskip}{0.5\baselineskip plus 2pt}}
+  {\end{minipage}\par}
+\makeatletter
+\@addtoreset{section}{part}
+\makeatother
+\renewcommand{\thesection}{\arabic{part}.\arabic{section}}
+\renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
+\renewcommand{\thesubsubsection}{\thesubsection.\arabic{subsubsection}}
+\titleformat{\section}{\normalfont\Large\bfseries}{\thesection}{0.75em}{}
+\titleformat{\subsection}{\normalfont\large\bfseries}{\thesubsection}{0.75em}{}
+\titleformat{\subsubsection}{\normalfont\normalsize\bfseries}{\thesubsubsection}{0.75em}{}
+\begin{document}
+INVENTED-TWO
+\end{document}

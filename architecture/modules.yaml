@@ -1,0 +1,371 @@
+{
+  "schema_version": 1,
+  "format": "YAML 1.2 JSON-compatible subset; parse with Python stdlib json",
+  "architecture_notes": [
+    "This manifest describes the logical architecture of the public Course Compiler v0.1.0-alpha.1 release. It authorizes no product architecture decision or physical module relocation.",
+    "Allowed dependencies record verified current logical edges. The validator checks declarations structurally and does not inspect Python imports.",
+    "All path entries are exact repository-relative files. Globs are intentionally excluded from schema version 1 for deterministic, fail-closed ownership.",
+    "The governance module present in the private development manifest is intentionally absent here; this public showcase repository has no task or worker-governance files."
+  ],
+  "modules": [
+    {
+      "id": "domain",
+      "purpose": "Deterministic contracts, identities, workflow policy/state, and value-level rendering and placement boundaries.",
+      "owned_paths": [
+        "course_compiler/asset.py",
+        "course_compiler/contracts.py",
+        "course_compiler/course.py",
+        "course_compiler/course_workflow.py",
+        "course_compiler/lecture_plan.py",
+        "course_compiler/math_format.py",
+        "course_compiler/safe_math.py",
+        "course_compiler/pdf_page.py",
+        "course_compiler/rendering.py",
+        "course_compiler/semantic_work.py",
+        "course_compiler/snippet_contract.py",
+        "course_compiler/visual_placement.py",
+        "course_compiler/workflow.py",
+        "course_compiler/workflow_policy.py"
+      ],
+      "allowed_dependencies": [],
+      "public_surfaces": [
+        "course_compiler/asset.py",
+        "course_compiler/contracts.py",
+        "course_compiler/course.py",
+        "course_compiler/course_workflow.py",
+        "course_compiler/pdf_page.py",
+        "course_compiler/rendering.py",
+        "course_compiler/semantic_work.py",
+        "course_compiler/visual_placement.py",
+        "course_compiler/workflow.py",
+        "course_compiler/workflow_policy.py"
+      ],
+      "test_paths": [
+        "tests/test_asset_identity.py",
+        "tests/test_course_identity.py",
+        "tests/test_course_workflow_association.py",
+        "tests/test_course_compiler_skill.py",
+        "tests/test_lecture_document.py",
+        "tests/test_pdf_page_identity.py",
+        "tests/test_renderer_boundary.py",
+        "tests/test_safe_math_catalog.py",
+        "tests/test_gpt_math_grammar.py",
+        "tests/test_visual_placement.py",
+        "tests/test_workflow_contract.py",
+        "tests/test_workflow_transitions.py"
+      ],
+      "context_docs": [
+        "docs/ARCHITECTURE.md"
+      ],
+      "full_gate_triggers": [
+        "course_compiler/contracts.py",
+        "course_compiler/workflow.py",
+        "course_compiler/workflow_policy.py"
+      ]
+    },
+    {
+      "id": "persistence",
+      "purpose": "Local immutable and stateful storage adapters for accepted domain contracts.",
+      "owned_paths": [
+        "course_compiler/build_persistence.py",
+        "course_compiler/course_job_persistence.py",
+        "course_compiler/course_persistence.py",
+        "course_compiler/course_workflow_persistence.py",
+        "course_compiler/lecture_document_persistence.py",
+        "course_compiler/policy_persistence.py",
+        "course_compiler/semantic_work_persistence.py",
+        "course_compiler/source_persistence.py",
+        "course_compiler/workflow_artifact_persistence.py",
+        "course_compiler/workflow_persistence.py"
+      ],
+      "allowed_dependencies": [
+        "domain"
+      ],
+      "public_surfaces": [
+        "course_compiler/build_persistence.py",
+        "course_compiler/course_job_persistence.py",
+        "course_compiler/course_persistence.py",
+        "course_compiler/course_workflow_persistence.py",
+        "course_compiler/lecture_document_persistence.py",
+        "course_compiler/policy_persistence.py",
+        "course_compiler/semantic_work_persistence.py",
+        "course_compiler/source_persistence.py",
+        "course_compiler/workflow_artifact_persistence.py",
+        "course_compiler/workflow_persistence.py"
+      ],
+      "test_paths": [
+        "tests/test_build_persistence.py",
+        "tests/test_course_job_persistence.py",
+        "tests/test_course_persistence.py",
+        "tests/test_course_workflow_persistence.py",
+        "tests/test_lecture_document_persistence.py",
+        "tests/test_policy_persistence.py",
+        "tests/test_semantic_work_persistence.py",
+        "tests/test_source_persistence.py",
+        "tests/test_workflow_artifact_persistence.py",
+        "tests/test_workflow_persistence.py"
+      ],
+      "context_docs": [
+        "docs/ARCHITECTURE.md"
+      ],
+      "full_gate_triggers": [
+        "course_compiler/course_workflow_persistence.py",
+        "course_compiler/workflow_persistence.py"
+      ]
+    },
+    {
+      "id": "build",
+      "purpose": "Deterministic rendering, assembly, extraction, and local PDF compilation.",
+      "owned_paths": [
+        "course_compiler/assembly.py",
+        "course_compiler/compilation.py",
+        "course_compiler/legacy_renderer.py",
+        "course_compiler/pdf_visual_extraction.py"
+      ],
+      "allowed_dependencies": [
+        "domain"
+      ],
+      "public_surfaces": [
+        "course_compiler/assembly.py",
+        "course_compiler/compilation.py",
+        "course_compiler/legacy_renderer.py",
+        "course_compiler/pdf_visual_extraction.py"
+      ],
+      "test_paths": [
+        "tests/test_course_assembly.py",
+        "tests/test_legacy_renderer.py",
+        "tests/test_pdf_compilation.py",
+        "tests/test_pdf_page_preview.py",
+        "tests/test_pdf_visual_extraction.py"
+      ],
+      "context_docs": [
+        "docs/ARCHITECTURE.md"
+      ],
+      "full_gate_triggers": [
+        "course_compiler/compilation.py",
+        "course_compiler/legacy_renderer.py"
+      ]
+    },
+    {
+      "id": "application",
+      "purpose": "Transport-neutral use-case orchestration over domain, persistence, and build capabilities.",
+      "owned_paths": [
+        "course_compiler/build_operations.py",
+        "course_compiler/course_operations.py",
+        "course_compiler/course_workflow_operations.py",
+        "course_compiler/course_workflow_transition_operations.py",
+        "course_compiler/evidence_access.py",
+        "course_compiler/semantic_operations.py",
+        "course_compiler/source_operations.py",
+        "course_compiler/source_snippets.py",
+        "course_compiler/visual_composition.py",
+        "course_compiler/workflow_artifact_operations.py"
+      ],
+      "allowed_dependencies": [
+        "domain",
+        "persistence",
+        "build"
+      ],
+      "public_surfaces": [
+        "course_compiler/build_operations.py",
+        "course_compiler/course_operations.py",
+        "course_compiler/course_workflow_operations.py",
+        "course_compiler/course_workflow_transition_operations.py",
+        "course_compiler/evidence_access.py",
+        "course_compiler/semantic_operations.py",
+        "course_compiler/source_operations.py",
+        "course_compiler/visual_composition.py",
+        "course_compiler/workflow_artifact_operations.py"
+      ],
+      "test_paths": [
+        "tests/test_app_course_operations.py",
+        "tests/test_build_operations.py",
+        "tests/test_course_workflow_build_operations.py",
+        "tests/test_course_workflow_lecture_operations.py",
+        "tests/test_course_workflow_operations.py",
+        "tests/test_course_workflow_source_operations.py",
+        "tests/test_course_workflow_transition_operations.py",
+        "tests/test_course_workflow_visual_build_operations.py",
+        "tests/test_evidence_access.py",
+        "tests/test_semantic_operations.py",
+        "tests/test_semantic_workflow_e2e.py",
+        "tests/test_source_ingestion_operations.py",
+        "tests/test_t050_application_e2e.py",
+        "tests/test_visual_composition.py",
+        "tests/test_workflow_artifact_ingestion_operations.py",
+        "tests/test_t051_product_parity.py"
+      ],
+      "context_docs": [
+        "docs/ARCHITECTURE.md"
+      ],
+      "full_gate_triggers": [
+        "course_compiler/course_workflow_operations.py",
+        "course_compiler/course_workflow_transition_operations.py"
+      ]
+    },
+    {
+      "id": "providers",
+      "purpose": "Executor-specific transport adapters over the transport-neutral SemanticWorkRequest/Result and EvidenceAccess boundaries. No provider SDK, no direct compiler mutation access.",
+      "owned_paths": [
+        "course_compiler/providers/__init__.py",
+        "course_compiler/providers/chatgpt_relay.py",
+        "course_compiler/providers/review_protocol.py"
+      ],
+      "allowed_dependencies": [
+        "domain",
+        "application"
+      ],
+      "public_surfaces": [
+        "course_compiler/providers/__init__.py",
+        "course_compiler/providers/chatgpt_relay.py",
+        "course_compiler/providers/review_protocol.py"
+      ],
+      "test_paths": [
+        "tests/test_chatgpt_relay.py"
+      ],
+      "context_docs": [
+        "docs/ARCHITECTURE.md"
+      ],
+      "full_gate_triggers": [
+        "course_compiler/providers/chatgpt_relay.py"
+      ]
+    },
+    {
+      "id": "package_api",
+      "purpose": "Package-level compatibility and public re-export surface; broad exports are not domain ownership.",
+      "owned_paths": [
+        "course_compiler/__init__.py"
+      ],
+      "allowed_dependencies": [
+        "domain",
+        "persistence",
+        "build",
+        "application"
+      ],
+      "public_surfaces": [
+        "course_compiler/__init__.py"
+      ],
+      "test_paths": [
+        "tests/test_asset_identity.py",
+        "tests/test_course_assembly.py",
+        "tests/test_course_identity.py",
+        "tests/test_course_workflow_association.py",
+        "tests/test_course_workflow_build_operations.py",
+        "tests/test_course_workflow_lecture_operations.py",
+        "tests/test_course_workflow_operations.py",
+        "tests/test_course_workflow_persistence.py",
+        "tests/test_course_workflow_source_operations.py",
+        "tests/test_course_workflow_transition_operations.py",
+        "tests/test_course_workflow_visual_build_operations.py",
+        "tests/test_lecture_document_persistence.py",
+        "tests/test_legacy_renderer.py",
+        "tests/test_mcp_file_ingress.py",
+        "tests/test_pdf_compilation.py",
+        "tests/test_pdf_page_identity.py",
+        "tests/test_pdf_page_preview.py",
+        "tests/test_pdf_visual_extraction.py",
+        "tests/test_policy_persistence.py",
+        "tests/test_renderer_boundary.py",
+        "tests/test_source_ingestion_operations.py",
+        "tests/test_source_persistence.py",
+        "tests/test_visual_composition.py",
+        "tests/test_visual_placement.py",
+        "tests/test_workflow_artifact_ingestion_operations.py",
+        "tests/test_workflow_artifact_persistence.py",
+        "tests/test_workflow_contract.py",
+        "tests/test_workflow_persistence.py"
+      ],
+      "context_docs": [
+        "README.md"
+      ],
+      "full_gate_triggers": [
+        "course_compiler/__init__.py"
+      ]
+    },
+    {
+      "id": "integrations",
+      "purpose": "MCP transport, runtime wiring, and bounded external file ingress around accepted application and lower-level surfaces.",
+      "owned_paths": [
+        "course_compiler/mcp_adapter.py",
+        "course_compiler/mcp_file_ingress.py",
+        "course_compiler/mcp_runtime.py"
+      ],
+      "allowed_dependencies": [
+        "domain",
+        "persistence",
+        "build",
+        "application"
+      ],
+      "public_surfaces": [
+        "course_compiler/mcp_adapter.py",
+        "course_compiler/mcp_file_ingress.py",
+        "course_compiler/mcp_runtime.py"
+      ],
+      "test_paths": [
+        "tests/test_course_compiler_plugin.py",
+        "tests/test_course_compiler_skill.py",
+        "tests/test_mcp_adapter.py",
+        "tests/test_mcp_file_ingress.py",
+        "tests/test_mcp_runtime.py",
+        "tests/test_mcp_streamable_http.py"
+      ],
+      "context_docs": [
+        "docs/ARCHITECTURE.md"
+      ],
+      "full_gate_triggers": [
+        "course_compiler/mcp_adapter.py",
+        "course_compiler/mcp_file_ingress.py",
+        "course_compiler/mcp_runtime.py"
+      ]
+    },
+    {
+      "id": "server",
+      "purpose": "Loopback HTTP transport for the v0.1 Local Developer Preview single-user app.",
+      "owned_paths": [
+        "course_compiler/app/__init__.py",
+        "course_compiler/app/__main__.py",
+        "course_compiler/app/config.py",
+        "course_compiler/app/context.py",
+        "course_compiler/app/server.py",
+        "course_compiler/app/static/app.css",
+        "course_compiler/app/static/app.js",
+        "course_compiler/app/static/index.html"
+      ],
+      "allowed_dependencies": [
+        "domain",
+        "persistence",
+        "build",
+        "application",
+        "providers",
+        "integrations"
+      ],
+      "public_surfaces": [
+        "course_compiler/app/__init__.py",
+        "course_compiler/app/__main__.py",
+        "course_compiler/app/config.py",
+        "course_compiler/app/context.py",
+        "course_compiler/app/server.py"
+      ],
+      "test_paths": [
+        "tests/test_app_build.py",
+        "tests/test_app_gpt_handoff.py",
+        "tests/test_app_release_readiness.py",
+        "tests/test_app_shell.py",
+        "tests/test_app_workspace_review.py",
+        "tests/test_t051_browser_semantics.py",
+        "tests/test_t051_course_job_projection_e2e.py",
+        "tests/test_t051_human_latency_lease_repair.py",
+        "tests/test_t051_plugin_relay_packaging.py",
+        "tests/test_t053_fast_review_e2e.py"
+      ],
+      "context_docs": [
+        "docs/ARCHITECTURE.md"
+      ],
+      "full_gate_triggers": [
+        "course_compiler/app/config.py",
+        "course_compiler/app/context.py",
+        "course_compiler/app/server.py"
+      ]
+    }
+  ]
+}

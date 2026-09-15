@@ -1,0 +1,4 @@
+interface:
+  display_name: "Course Compiler"
+  short_description: "Build validated, exam-ready courses from source PDFs"
+  default_prompt: "Use $course-compiler to build an exam-ready study course from my source PDFs."

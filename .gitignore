@@ -1,0 +1,23 @@
+# Private course material and generated evidence never enter Git.
+/local-data/
+/local-artifacts/
+
+# Build products, including nested LaTeX build directories.
+build/
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
+*.xdv
+*.pdf
+
+# Python/editor noise.
+__pycache__/
+*.py[cod]
+.DS_Store
+.idea/
+.vscode/
+
