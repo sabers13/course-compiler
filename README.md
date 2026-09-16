@@ -1,70 +1,95 @@
 # Course Compiler
 
-Course Compiler is MIT licensed — see [LICENSE](LICENSE).
+[![CI](https://github.com/sabers13/course-compiler/actions/workflows/ci.yml/badge.svg)](https://github.com/sabers13/course-compiler/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)
+[![Latest tag](https://img.shields.io/github/v/tag/sabers13/course-compiler?label=release&color=orange)](https://github.com/sabers13/course-compiler/tags)
 
-Course Compiler is a local-first, single-user AI-assisted course-authoring
-and study-material compiler. It turns private course sources into
-structured, exam-oriented lectures and a verified study PDF. Semantic
-reasoning happens in ChatGPT (no app-funded LLM); deterministic evidence,
-rendering, and PDF compilation happen locally in Course Compiler.
+**A local-first compiler that turns private course PDFs into exam-oriented lectures and a validated study PDF.**
 
-> **Course Compiler v0.1.0-alpha.1 — Local Developer Preview.**
-> Pre-release / Local Developer Preview. Intended for local single-user
-> experimentation. Not a hosted or multi-user production service. A small,
-> truthful, demonstrable local product the owner can use and show. v0.1 is
-> **not** a production SaaS, **not** enterprise-ready, and **not** a
-> hosted service.
+An LLM writes the lecture content. Course Compiler keeps the sources, the workflow state, the owner approvals, the validation, and the PDF build on your own machine.
 
-## What you can do in v0.1
+> **Core principle: the LLM writes; deterministic software validates and builds.**
 
-- Create a course in the browser on `http://127.0.0.1:8787/`.
-- Attach one or more private PDF source files.
-- Choose `fast` (FAST — direct) or `review` (REVIEW — adds semantic
-  review and correction before build).
-- Generate lecture material through a browser-mediated GPT relay
-  (`Continue in ChatGPT` / `Resume in ChatGPT`). The app never messages
-  ChatGPT automatically; you copy a prompt into a fresh ChatGPT
-  conversation, attach the listed current evidence, paste the Markdown
-  response back into the relay.
-- Review and correct the generated lectures (REVIEW mode).
-- Build a deterministic PDF and download it.
-- Refresh or restart the app at any point; courses, jobs, and build
-  history survive both.
+> [!IMPORTANT]
+> **v0.1.0-alpha.1 is a Local Developer Preview.** It is intended for local, single-user experimentation. It is **not** a hosted service, **not** multi-user, and **not** production-ready. Semantic generation currently runs through a browser-mediated ChatGPT relay only.
 
-## What v0.1 deliberately is not
+---
 
-- **No BYOK / user-funded provider.** v0.1 ships GPT-only. BYOK is
-  deferred to a future release.
-- **No multi-user / no hosted SaaS.** v0.1 is single-user, loopback-only
-  (`127.0.0.1`), and runs entirely on your own machine. Multi-user
-  isolation, hosted HTTPS deployment, public submission, and the official
-  publication step are all deferred to a future release.
-- **No broad provider support.** Only ChatGPT semantic mode is
-  supported in v0.1.
-- **No production visual polish.** v0.1 is a working single-user app,
-  not a finished commercial product.
+## Why Course Compiler?
 
-## Prerequisites
+Asking a chatbot to "summarize my course" produces text that is hard to trust, hard to resume, and hard to turn into a clean document. Course Compiler treats generation as one step inside a controlled pipeline:
 
-The core local web runtime is implemented with the Python standard
-library and a vanilla HTML/CSS/JS frontend. To run the app you need:
+| ChatGPT (via the relay) | Course Compiler (local) |
+| --- | --- |
+| Writes the source and exam-priority assessments, the lecture plan, one lecture per turn, and REVIEW feedback when requested | Stores exact source bytes and decides which evidence each turn may use |
+| Receives only the evidence you explicitly attach | Holds workflow state, owner approvals, and revisions durably in SQLite |
+| Returns Markdown and nothing else | Treats that Markdown as untrusted and validates it before rendering |
+| Never approves plans or triggers builds | Renders LaTeX and compiles the PDF deterministically |
 
-- **Python 3.10+** on `PATH` as `python3` (no third-party Python
-  packages are required to run the app).
+---
 
-To compile the final study PDF you additionally need:
+## How it works
 
-- `latexmk`, `xelatex`, and `kpsewhich` from a working **TeX Live**
-  install (`texlive-xetex`, `texlive-base`, `texlive-latex-base`,
-  `texlive-latex-recommended`, `texlive-latex-extra`,
-  `texlive-fonts-recommended`).
-- `pdftoppm` (Poppler tools).
-- `fc-match` (fontconfig) plus the pinned fonts (`fonts-lmodern`,
-  `fonts-noto-mono`).
-- `python3` must be able to spawn `latexmk`.
+```mermaid
+flowchart LR
+    S[Course PDFs] --> C[Content-addressed<br/>local sources]
+    C --> SA[Relay turn:<br/>source assessment + priority proposal]
+    SA --> PR[Relay turn:<br/>exam-priority assessment]
+    PR --> AP{Owner approves<br/>priority basis}
+    AP --> M[Relay turn:<br/>lecture plan]
+    M --> AM{Owner edits /<br/>approves plan}
+    AM --> L[Relay turn per lecture]
+    L --> V[Validation of<br/>untrusted Markdown]
+    V --> R{REVIEW mode?}
+    R -- yes --> RC[Semantic review<br/>+ correction turns]
+    RC --> B
+    R -- no --> B[Deterministic<br/>XeLaTeX build]
+    B --> D[Study PDF<br/>+ build record]
+```
 
-For the exact pinned versions and reproduction evidence, see
-[`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md).
+1. **Sources.** Attached PDFs are stored as exact, immutable bytes under an opaque content-addressed reference. The original filename is a session convenience only.
+2. **Relay turns.** For each semantic task the app shows the prompt and the exact current evidence to attach. You run it in a fresh ChatGPT conversation and paste the Markdown back.
+3. **Owner approvals.** After the source assessment and exam-priority assessment turns, the priority basis requires your explicit approval. After the lecture-plan turn, the plan can be edited and must be approved too. Approvals are bound to a hash of the content you reviewed.
+4. **Lectures.** Lectures are generated one per turn against the approved plan.
+5. **Review (optional).** In REVIEW mode, a semantic review can request corrections, and the build stays disabled until a new review returns no further corrections.
+6. **Build.** Accepted content is rendered to LaTeX, compiled with XeLaTeX, and stored with a durable build record.
+
+---
+
+## Key design decisions
+
+### LLM output is untrusted input
+
+Generated Markdown must fit a constrained formatting profile. Mathematics is checked against a static, versioned safe-math catalog: unknown commands are not executable, and installed TeX packages are never consulted at runtime to decide what is allowed.
+
+### Explicit, bounded evidence transfer
+
+The app holds no provider API key and makes no network calls to OpenAI or any other provider. Evidence leaves your machine only when you download the listed files and attach them to ChatGPT yourself.
+
+### Durable, stale-safe workflow
+
+Courses, jobs, approvals, and build history survive refreshes and restarts. Before a relay result is submitted, the app renews its lease and verifies the durable state has not moved since the relay opened. A stale submission is refused, not merged.
+
+### Reproducible PDF builds
+
+Builds use a fixed compilation profile, named font families, and a fixed `SOURCE_DATE_EPOCH`, so identical accepted content is reproducible within the documented toolchain profile. Compiled PDF bytes are memoized for reuse, with their identity recorded durably in the build record.
+
+### Content-safe failure
+
+Startup and HTTP diagnostics are stable codes such as `data_root_invalid` or `build_not_succeeded`. They never include source bytes, file paths, or stack traces.
+
+---
+
+## Requirements
+
+- **Python 3.10+** as `python3`. The core runtime uses the Python standard library and a vanilla HTML/CSS/JS frontend; no third-party Python packages are needed to run the app.
+- **To compile PDFs:** TeX Live with `latexmk`, `xelatex`, and `kpsewhich`; Poppler (`pdftoppm`, plus `pdfinfo` for the full test suite); fontconfig (`fc-match`) with `fonts-lmodern` and `fonts-noto-mono`.
+- **Optional:** the MCP Python SDK in [`requirements-mcp.txt`](requirements-mcp.txt), only for the future hosted MCP seam and its integration tests.
+
+Exact packages and reproduction steps are in [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md).
+
+---
 
 ## Installation
 
@@ -73,262 +98,87 @@ git clone https://github.com/sabers13/course-compiler.git
 cd course-compiler
 ```
 
-No third-party Python packages are required to run the app. The only
-optional Python dependency is the official MCP Python SDK v2, listed in
-[`requirements-mcp.txt`](requirements-mcp.txt), which is **not** needed
-for the v0.1 Local Developer Preview and is only relevant for hosted /
-remote MCP exposure (a future-release concern). To enable the optional
-MCP integration tests:
-
-```bash
-pip install -r requirements-mcp.txt
-```
-
-Without it, those tests skip cleanly with a precise reason instead of
-failing. Likewise, PDF/full-toolchain tests require the documented
-TeX/font toolchain above and skip cleanly when it is unavailable.
-
-## Start the app
-
-From the repository root:
+## Quick start
 
 ```bash
 make app
+# or: python3 -m course_compiler.app
 ```
 
-or equivalently:
+Open `http://127.0.0.1:8787/`, then:
 
-```bash
-python3 -m course_compiler.app
-```
+1. Click **+ New Course**, add a title and optional course guidance, and choose **fast** or **review**.
+2. Click **Attach Sources** and select one or more PDFs.
+3. Click **Start Generation**.
+4. Click **Continue in ChatGPT**. For each turn, copy the prompt, attach only the listed evidence in a fresh ChatGPT conversation, and paste the Markdown response back. Complete the source-assessment and exam-priority-assessment turns as prompted.
+5. Review and **Approve** the priority basis.
+6. Continue in ChatGPT for the lecture plan; edit it if needed, then approve it.
+7. Continue the relay one lecture at a time. In REVIEW mode, complete any review and correction turns.
+8. Click **Build PDF**, then **Download PDF**.
 
-The app binds a loopback port (`127.0.0.1`, default `8787`) and prints
-a content-safe startup line, for example:
+After a page reload, the relay button reads **Resume in ChatGPT**. To exercise the local generation and build path without ChatGPT, **Run Synthetic Demo Generation** drives built-in fixture content through the backend and automatically advances its synthetic approval gates. The content is demo material, not ChatGPT output.
 
-```
-Course Compiler app listening on http://127.0.0.1:8787/
-```
+### Options
 
-Open that URL in your browser. The app creates and uses a SQLite data
-root under `local-data/app/` by default — this is inside the
-git-ignored `local-data/` privacy root (see *Privacy* below).
+| Flag | Purpose |
+| --- | --- |
+| `--port N` | Port (default `8787`; `0` for an ephemeral port) |
+| `--data-root PATH` | Data root (default `local-data/app`); must be inside `local-data/`, `local-artifacts/`, or `build/` |
+| `--allow-non-loopback` | Development-only override; non-loopback binds are refused without it |
 
-Override flags:
+### FAST vs REVIEW
 
-- `--port 0` — bind an ephemeral port (the startup line prints the
-  chosen port).
-- `--port N` — bind a specific port in `1024..65535`.
-- `--data-root PATH` — use a different data root. Must live inside
-  `local-data/`, `local-artifacts/`, or `build/`; anything outside an
-  approved ignored root is refused fail-closed with the
-  content-safe code `data_root_invalid`.
-- `--allow-non-loopback` — bind a non-loopback interface
-  (development-only escape hatch; the app refuses non-loopback binds
-  without it).
+- **FAST** accepts generated content as final once generation completes.
+- **REVIEW** adds a Semantic Content Review between generation and build. Corrections require another relay turn and a new review verdict before **Build PDF** is enabled.
 
-Stop the app with `Ctrl-C`. The shutdown line is content-safe:
+Semantic Content Review is separate from Document Checks, which run in both modes.
 
-```
-Course Compiler app stopped.
-```
-
-### If startup fails
-
-Startup diagnostics are content-safe fixed codes:
-
-| Code                | Meaning                                                                                    |
-|---------------------|--------------------------------------------------------------------------------------------|
-| `host_invalid`      | The `--host` string is malformed.                                                          |
-| `host_not_loopback` | The app refuses non-loopback binds unless `--allow-non-loopback` is set.                   |
-| `port_invalid`      | The `--port` value is not in the allowed range.                                            |
-| `data_root_invalid` | The data root is outside an approved ignored root, missing, or not a `Path`.               |
-| `data_root_unavailable` | The data root could not be prepared (e.g. permission denied on the chosen ignored root). |
-
-Resolve the named condition and try again. None of these messages
-expose private content, file paths, or stack traces.
-
-## Quick-start workflow
-
-1. Open `http://127.0.0.1:8787/` in your browser.
-2. Click **+ New Course**, give the course a title, optionally add
-   course guidance, pick `fast` or `review`, and click **Create**.
-3. On the course card, click **Attach Sources** and select one or
-   more PDF source files. The session-only filenames appear on the
-   card for convenience; the app durably stores the exact source
-   bytes locally under an opaque content-addressed source reference,
-   while the original filename is not a durable source identity.
-4. Click **Start Generation**. The app initializes a durable job.
-5. **Continue in ChatGPT**: copy the displayed prompt, open a fresh
-   ChatGPT conversation, attach only the listed current evidence,
-   paste the prompt, paste ChatGPT's Markdown response back into the
-   relay, and click **Submit result**.
-6. Repeat for each lecture until the job reaches
-   `deterministic_building`.
-7. **REVIEW mode only:** the Semantic Content Review section asks
-   for any corrections. Continue in ChatGPT for the correction turn,
-   then re-review; corrections are not submittable until the new
-   review verdict returns no further corrections.
-8. Click **Build PDF**. The build is accepted only when the backend
-   authority permits it; otherwise the button shows a backend-derived
-   reason and is disabled.
-9. Click **Download PDF**.
-
-A **Refresh** button and a 15-second polling cycle (paused while the
-GPT relay is open, while the tab is hidden, and while no courses
-exist) keep the page truthful during long human-mediated turns.
-
-## FAST vs REVIEW
-
-- **FAST** — direct path. The app accepts the semantic content as
-  final as soon as generation completes; `Build PDF` is enabled once
-  the build authority permits it.
-- **REVIEW** — adds a Semantic Content Review step between
-  generation and build. The first review may request corrections;
-  corrections require another fresh GPT turn and a *new* review
-  verdict that returns no further corrections before `Build PDF` is
-  enabled.
-
-The UI keeps these distinct. `Semantic Content Review` is a separate
-section from `Document Checks` (which run in both modes).
-
-## GPT relay explanation
-
-v0.1 deliberately does **not** message ChatGPT automatically. The
-relay UI presents:
-
-1. The exact prompt to copy.
-2. The exact current evidence files to download and attach.
-3. A textarea to paste ChatGPT's Markdown response.
-4. A **Submit result** button that pre-renews the lease, verifies the
-  durable authority has not changed since the relay opened, and
-  submits the response on your behalf.
-
-- `Continue in ChatGPT` is shown while you have a live page session
-  with the same `holder_id` (the browser session-storage entry for
-  the active job).
-- `Resume in ChatGPT` is shown after a page reload (fresh page
-  session, no live `holder_id`); the same renewal and identity
-  discipline protects durable authority.
-
-If the durable state moved between the moment the relay opened and
-the moment you click **Submit result**, the submit is refused with a
-plain-language diagnostic and you are asked to reopen the relay.
-
-The relay is purely local and browser-mediated: you copy, attach,
-and paste by hand. The app holds no provider API key and makes no
-network calls to OpenAI or any other provider; there is no OpenAI
-API usage in v0.1.0-alpha.1.
-
-## Where the final PDF appears and how to download it
-
-When the build succeeds, the UI shows a **Download PDF** button on the
-course card. Build history (success and failure) is shown beneath the
-card; succeeded builds link directly to the PDF.
-
-The build also writes durable `BuildRecord` rows under the data root
-(`local-data/app/build-records.sqlite3`) and memoizes the compiled PDF
-bytes; the same artifact can be re-fetched deterministically from the
-existing `GET /api/jobs/{id}/artifact` route.
+---
 
 ## Privacy
 
-Course Compiler's privacy boundary is grounded in where data is
-allowed to live, what the app does automatically, and what the owner
-must do explicitly.
+- Source bytes, generated content, workflow state, and build records live under the git-ignored `local-data/` root. Caches and artifacts may use the git-ignored `local-artifacts/` and `build/` roots. The tracked repository never contains course material.
+- The app is loopback-only by default.
+- **GPT mode is not fully offline.** Nothing is uploaded automatically, but the evidence you attach to ChatGPT does leave your machine. The app keeps that transfer explicit and bounded.
 
-- **Durable local data lives under ignored roots.** Source bytes,
-  semantic outputs, workflow/application state, and durable build
-  records are stored under the git-ignored `local-data/` root
-  (by default `local-data/app/` SQLite stores). Generated caches and
-  build artifacts may additionally use the git-ignored
-  `local-artifacts/` and `build/` roots. The tracked Git repository
-  must never contain private or content-bearing material.
-- **Original filenames are not durable source identities.** The
-  original filename you select in the browser is only a session
-  convenience for the current page session; the durable source
-  identity is an opaque per-source reference tied to the source's
-  content digest and stored locally. The relay uses safe evidence
-  identifiers/labels instead of relying on your original filenames.
-- **GPT mode is not fully offline.** The app does **not** automatically
-  upload your evidence to ChatGPT. However, the GPT relay is
-  browser-mediated: when you follow the relay, you explicitly
-  download the bounded current evidence listed for that turn and
-  attach those files to a fresh ChatGPT conversation of your own.
-  Evidence content therefore intentionally leaves your machine when
-  you choose to follow the relay — the app's role is to keep that
-  transfer explicit, bounded, and owner-controlled, never silent.
-- **No secrets.** v0.1 ships GPT-only and does not require or store
-  any provider API key.
-- **The app is loopback-only by default.** It refuses non-loopback
-  binds unless you explicitly pass `--allow-non-loopback`.
-- **Content-safe diagnostics.** HTTP responses and startup lines
-  never include raw source bytes, source paths, or stack traces;
-  failure modes are stable codes (`host_invalid`, `data_root_invalid`,
-  `build_not_succeeded`, …) that name only the kind of problem.
+---
 
-In short: content-bearing files are kept out of the tracked Git
-repository and remain within approved ignored local storage, except
-for the exact evidence you choose to transfer to ChatGPT when you
-follow the GPT relay. The app does that transfer explicitly, not
-silently, and never via an embedded provider key.
+## Current limitations
 
-## Known limitations
+- Local, single-user preview; no multi-user isolation, hosted deployment, or HTTPS.
+- ChatGPT relay only; bring-your-own-key providers are deferred.
+- Unusual formula or Markdown formatting in generated output can still require repair.
+- Public tests use invented synthetic PDFs only and never exercise private course material.
 
-- **Constrained GPT-output profile.** GPT-generated Markdown
-  currently has a constrained accepted formatting profile. Unusual
-  formula/Markdown formatting can still require repair. Future work
-  includes broader GPT-output normalization and improved tolerance.
-- **Tests run against invented synthetic PDFs only.** Tracked tests do
-  not contain private course material and never exercise private
-  genuine-course E2E.
-- **v0.1 is a single-user local app, not a hosted service.** No
-  multi-user isolation, no hosted HTTPS, no public submission, no
-  official publication.
-- **GPT mode only.** BYOK is paused and deferred to a future release.
-- **Frontend is intentionally minimal.** Vanilla HTML/CSS/JS, no
-  framework, no full responsive contract beyond the existing
-  `@media(max-width:900px)` narrow-width stacking, no token fidelity,
-  no pixel parity.
+---
 
-## v0.1 non-goals
+## Development
 
-The v0.1 Local Developer Preview does **not** claim and does **not**
-include any of the following. They are explicitly deferred to a
-future release:
+```bash
+make test   # public test suite
+make gate   # release validation gate
+```
 
-- BYOK provider boundary.
-- Multi-user identity / isolation.
-- Hosted public HTTPS deployment.
-- Public hardening and submission package.
-- Official review, submission, and publication.
-- Broad provider expansion beyond ChatGPT.
-- Hosted SaaS, public service, or any other multi-tenant deployment.
-- Production visual polish, full responsive design, pixel-perfect UI.
+The gate checks required files, Python parsing, the module manifest in [`architecture/modules.yaml`](architecture/modules.yaml), tracked-path hygiene, ignored roots, and the public tests, then runs a synthetic XeLaTeX toolchain probe that is non-fatal when TeX is not installed.
 
-If you find yourself needing any of these in v0.1, that is the signal
-that v0.1 is not the right release cut; it is a deliberate local
-preview, not a partial production system.
+Optional MCP and full-toolchain tests skip with the missing prerequisite named when their dependencies are unavailable; a present but broken dependency still fails. GitHub Actions runs `make gate` on pushes and pull requests to `main` with the MCP dependencies installed and without the TeX stack, so PDF toolchain tests are skipped there. Full PDF validation runs with `make gate` on a machine that satisfies [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md).
 
-## Commands
+### Repository layout
 
-- `make app` — start the local Course Compiler web app on
-  `127.0.0.1:8787` (the v0.1 entry point).
-- `make test` — run the public test suite. Optional
-  integration/full-toolchain cases skip cleanly when their documented
-  prerequisites are unavailable.
-- `make gate` — run the public release-validation checks (Python
-  parsing, manifest integrity, ignored-path check, public tests, and
-  the synthetic XeLaTeX toolchain probe, which is non-fatal when the
-  TeX toolchain is not installed).
+```text
+course_compiler/         application package (domain, workflow, persistence, rendering, build)
+course_compiler/app/     local HTTP server and static frontend
+skills/course-compiler/  ChatGPT skill with versioned authoring and review prompts
+architecture/            module manifest
+ci/                      release validation gate
+docs/                    architecture and toolchain documentation
+tests/                   public test suite with synthetic fixtures
+```
 
-## Where to look next
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the layered module design.
 
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — released
-  architecture at engineering level.
-- [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md) — exact pinned toolchain,
-  fonts, and reproduction steps.
-- [`LICENSE`](LICENSE) — MIT license.
+---
 
-Start with the *Quick-start workflow* above. The v0.1 Local Developer
-Preview is intentionally small; everything else is planned for a
-future release.
+## License
+
+MIT. See [LICENSE](LICENSE).
