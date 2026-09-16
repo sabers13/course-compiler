@@ -46,8 +46,8 @@ rendering, and PDF compilation happen locally in Course Compiler.
 
 ## Prerequisites
 
-The application itself uses only the Python standard library. To run the
-app you need:
+The core local web runtime is implemented with the Python standard
+library and a vanilla HTML/CSS/JS frontend. To run the app you need:
 
 - **Python 3.10+** on `PATH` as `python3` (no third-party Python
   packages are required to run the app).
@@ -74,10 +74,19 @@ cd course-compiler
 ```
 
 No third-party Python packages are required to run the app. The only
-optional dependency is the official MCP Python SDK v2, listed in
+optional Python dependency is the official MCP Python SDK v2, listed in
 [`requirements-mcp.txt`](requirements-mcp.txt), which is **not** needed
 for the v0.1 Local Developer Preview and is only relevant for hosted /
-remote MCP exposure (a future-release concern).
+remote MCP exposure (a future-release concern). To enable the optional
+MCP integration tests:
+
+```bash
+pip install -r requirements-mcp.txt
+```
+
+Without it, those tests skip cleanly with a precise reason instead of
+failing. Likewise, PDF/full-toolchain tests require the documented
+TeX/font toolchain above and skip cleanly when it is unavailable.
 
 ## Start the app
 
@@ -304,10 +313,13 @@ preview, not a partial production system.
 
 - `make app` — start the local Course Compiler web app on
   `127.0.0.1:8787` (the v0.1 entry point).
-- `make test` — run the public test suite.
-- `make gate` — run the public validation gate (Python parsing,
-  manifest integrity, ignored-path check, public tests, and the
-  synthetic XeLaTeX toolchain probe).
+- `make test` — run the public test suite. Optional
+  integration/full-toolchain cases skip cleanly when their documented
+  prerequisites are unavailable.
+- `make gate` — run the public release-validation checks (Python
+  parsing, manifest integrity, ignored-path check, public tests, and
+  the synthetic XeLaTeX toolchain probe, which is non-fatal when the
+  TeX toolchain is not installed).
 
 ## Where to look next
 

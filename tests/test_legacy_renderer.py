@@ -4,7 +4,6 @@ import ast
 import hashlib
 import inspect
 import re
-import shutil
 import unittest
 from dataclasses import FrozenInstanceError, replace
 from pathlib import Path
@@ -29,11 +28,13 @@ from course_compiler.compilation import (
     CompilationFailure,
     compile_pdf,
 )
+from tests.toolchain_support import TEX_MISSING_REASON, TEX_TOOLCHAIN_AVAILABLE
 
 
 FIXTURES = Path(__file__).parent / "fixtures" / "synthetic" / "lecture-document"
 
-_COMPILER_AVAILABLE = shutil.which("latexmk") is not None and shutil.which("xelatex") is not None
+_COMPILER_AVAILABLE = TEX_TOOLCHAIN_AVAILABLE
+_COMPILER_MISSING_REASON = TEX_MISSING_REASON
 
 
 def make_document(
@@ -453,7 +454,9 @@ class LegacyProfileTests(unittest.TestCase):
         self.assertEqual(empty.metrics.input_lines, 0)
 
 
-@unittest.skipUnless(_COMPILER_AVAILABLE, "frozen XeLaTeX profile unavailable")
+@unittest.skipUnless(
+    _COMPILER_AVAILABLE, f"frozen XeLaTeX profile unavailable ({_COMPILER_MISSING_REASON})"
+)
 class StandaloneLayoutCompileTests(unittest.TestCase):
     """Behavioral compiler regressions for the two release defects.
 

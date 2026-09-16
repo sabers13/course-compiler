@@ -1,0 +1,40 @@
+# Course Compiler public continuous integration.
+#
+# Runs the public release-validation gate on every push to main and on
+# pull requests targeting main.
+#
+# CI profile (deliberate and boring):
+# - Python dependencies: requirements-mcp.txt only, so the optional MCP
+#   integration tests EXECUTE here rather than skip.
+# - TeX/font toolchain: NOT installed. PDF/full-toolchain tests detect
+#   the documented prerequisites and SKIP cleanly with a precise reason
+#   (see docs/TOOLCHAIN.md). Full PDF toolchain validation is performed
+#   by `make gate` on environments satisfying docs/TOOLCHAIN.md.
+name: public-gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install optional MCP test dependencies
+        run: pip install -r requirements-mcp.txt
+
+      - name: Run public release-validation gate
+        run: make gate
+
+      - name: Check for whitespace errors
+        run: git diff --check

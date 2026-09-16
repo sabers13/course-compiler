@@ -21,6 +21,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from tests.toolchain_support import TEX_MISSING_REASON, TEX_TOOLCHAIN_AVAILABLE
+
 from course_compiler.app.config import create_config
 from course_compiler.app.context import AppContext
 from course_compiler.build_operations import build_pdf, get_artifact, get_artifact_history
@@ -67,6 +69,10 @@ def _make_dummy_pdf(seed: str) -> bytes:
     return content.encode("latin1")
 
 
+@unittest.skipUnless(
+    TEX_TOOLCHAIN_AVAILABLE,
+    f"real XeLaTeX build unavailable ({TEX_MISSING_REASON})",
+)
 class TestT050ApplicationE2E(unittest.TestCase):
     def test_full_deterministic_application_e2e_with_cache_rederivation(self) -> None:
         with _isolated_tmp_dir() as tmp:

@@ -20,6 +20,12 @@ from course_compiler.build_persistence import open_build_record_store
 from course_compiler.semantic_work import SemanticDiagnostic, ScriptProvider
 from course_compiler.semantic_work_persistence import open_semantic_work_store
 from course_compiler.workflow_persistence import open_workflow_state_store
+from tests.toolchain_support import (
+    NODE_MISSING_REASON,
+    TEX_MISSING_REASON,
+    TEX_TOOLCHAIN_AVAILABLE,
+    node_available,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -90,6 +96,10 @@ class WorkspaceReviewContractTests(unittest.TestCase):
     def _drive_to_completed(self, job_id: str) -> None:
         self._call("POST", f"/api/jobs/{job_id}/run-controlled-generation", {"map_size": 1})
 
+    @unittest.skipUnless(
+        TEX_TOOLCHAIN_AVAILABLE,
+        f"real XeLaTeX build unavailable ({TEX_MISSING_REASON})",
+    )
     def test_runtime_job_projection_keeps_review_and_build_checks_independent(self) -> None:
         _, fast_job = self._new_job("fast")
         fast = self._call("GET", f"/api/jobs/{fast_job}")
@@ -137,6 +147,9 @@ class WorkspaceReviewContractTests(unittest.TestCase):
         css = self._asset("/static/app.css")
         self.assertIn(".notice", css)
 
+    @unittest.skipUnless(
+        node_available(), f"shipped JS decision cannot execute ({NODE_MISSING_REASON})"
+    )
     def test_frontend_build_state_fails_closed_under_review_authority(self) -> None:
         """T054-R01: the shipped buildState decision must consult
         content_review BEFORE treating deterministic_building as
@@ -374,6 +387,10 @@ class WorkspaceReviewContractTests(unittest.TestCase):
         self.assertEqual(refused["error"], "semantic_review_pending")
         self.assertEqual(self._build_record_count(job_id), 0)
 
+    @unittest.skipUnless(
+        TEX_TOOLCHAIN_AVAILABLE,
+        f"real XeLaTeX build unavailable ({TEX_MISSING_REASON})",
+    )
     def test_review_build_succeeds_after_new_no_corrections_verdict(self) -> None:
         """Gate 4: After the new no-corrections verdict, the same REVIEW
         course can build successfully.

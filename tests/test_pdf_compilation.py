@@ -27,6 +27,9 @@ from course_compiler import (
 from course_compiler import compilation
 
 
+from tests.toolchain_support import TEX_MISSING_REASON, TEX_TOOLCHAIN_AVAILABLE
+
+
 _SYNTHETIC_TEX = r"""\documentclass{article}
 \begin{document}
 Invented compiler-boundary material.
@@ -123,6 +126,10 @@ class PublicCompilationContractTests(unittest.TestCase):
             CompilationFailure("compilation_failed", (forged_diagnostic,))
 
 
+@unittest.skipUnless(
+    TEX_TOOLCHAIN_AVAILABLE,
+    f"real XeLaTeX compile unavailable ({TEX_MISSING_REASON})",
+)
 class RealCompilerIntegrationTests(unittest.TestCase):
     def _compile_and_record_workspace(self, value: LogicalTexFile) -> tuple[CompiledPdf, Path]:
         original_factory = compilation._temporary_workspace
@@ -1054,6 +1061,10 @@ class BundleCompilationBoundaryTests(unittest.TestCase):
         self.assertEqual(relative, {"assembly"})
 
 
+@unittest.skipUnless(
+    TEX_TOOLCHAIN_AVAILABLE,
+    f"real XeLaTeX compile unavailable ({TEX_MISSING_REASON})",
+)
 class BundleRealCompilerIntegrationTests(unittest.TestCase):
     def test_synthetic_nested_input_companion_compiles_with_the_real_toolchain(self) -> None:
         original_factory = compilation._temporary_workspace

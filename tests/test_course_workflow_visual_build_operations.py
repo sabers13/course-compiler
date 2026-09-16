@@ -8,6 +8,8 @@ from dataclasses import fields
 from pathlib import Path
 from unittest import mock
 
+from tests.toolchain_support import TEX_MISSING_REASON, TEX_TOOLCHAIN_AVAILABLE
+
 import course_compiler
 import course_compiler.course_workflow_operations as operations
 from course_compiler import (
@@ -503,6 +505,10 @@ class DependencyBoundaryTests(unittest.TestCase):
         self.assertTrue({"visual_composition", "visual_placement", "asset"} <= imports)
 
 
+@unittest.skipUnless(
+    TEX_TOOLCHAIN_AVAILABLE,
+    f"real XeLaTeX compile unavailable ({TEX_MISSING_REASON})",
+)
 class SyntheticRealToolchainTests(unittest.TestCase):
     """One real synthetic compile through the new operation (test-only use)."""
 

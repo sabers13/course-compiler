@@ -13,6 +13,17 @@ import zlib
 from pathlib import Path
 from unittest import mock
 
+from tests.toolchain_support import (
+    HTTPCORE_MISSING_REASON,
+    MCP_MISSING_REASON,
+    POPPLER_AVAILABLE,
+    POPPLER_MISSING_REASON,
+    require_optional_packages,
+)
+
+require_optional_packages("mcp", reason=MCP_MISSING_REASON)
+require_optional_packages("httpcore", reason=HTTPCORE_MISSING_REASON)
+
 from mcp.types import CallToolResult, EmbeddedResource, ImageContent, TextContent
 
 import course_compiler.mcp_adapter as adapter
@@ -990,6 +1001,10 @@ class PreviewExtractionAndBuildTests(AdapterHarness):
             "physical_page_ordinal": 1,
         }
 
+    @unittest.skipUnless(
+        POPPLER_AVAILABLE,
+        f"real Poppler preview/extraction unavailable ({POPPLER_MISSING_REASON})",
+    )
     def test_preview_and_extract_return_standard_mcp_png_content_and_exact_metadata(
         self,
     ) -> None:

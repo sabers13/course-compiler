@@ -1,7 +1,6 @@
 """Static safe-math catalog and frozen-profile compatibility proof."""
 from __future__ import annotations
 
-import shutil
 import unittest
 
 from course_compiler.assembly import LogicalTexFile, _PREAMBLE
@@ -25,9 +24,11 @@ from course_compiler.safe_math import (
     SAFE_MATH_STRUCTURAL_COMMANDS,
     SAFE_MATH_SYMBOLS,
 )
+from tests.toolchain_support import TEX_MISSING_REASON, TEX_TOOLCHAIN_AVAILABLE
 
 
-_COMPILER_AVAILABLE = shutil.which("latexmk") is not None and shutil.which("xelatex") is not None
+_COMPILER_AVAILABLE = TEX_TOOLCHAIN_AVAILABLE
+_COMPILER_MISSING_REASON = TEX_MISSING_REASON
 
 
 def _command_expressions() -> tuple[str, ...]:
@@ -98,7 +99,7 @@ class SafeMathCatalogTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             prepare_lecture_markdown(r"\[\begin{equation}x\end{equation}\]")
 
-    @unittest.skipUnless(_COMPILER_AVAILABLE, "frozen XeLaTeX profile unavailable")
+    @unittest.skipUnless(_COMPILER_AVAILABLE, f"frozen XeLaTeX profile unavailable ({_COMPILER_MISSING_REASON})")
     def test_every_catalog_entry_compiles_under_the_frozen_profile(self) -> None:
         displays = "\n".join(r"\[" + expression + r"\]" for expression in _command_expressions())
         tex = _PREAMBLE + "\n" + displays + "\n\\end{document}\n"

@@ -19,6 +19,13 @@ import time
 import unittest
 from unittest import mock
 
+from tests.toolchain_support import (
+    HTTPCORE_MISSING_REASON,
+    require_optional_packages,
+)
+
+require_optional_packages("httpcore", reason=HTTPCORE_MISSING_REASON)
+
 import httpcore
 
 from course_compiler import mcp_file_ingress as ingress

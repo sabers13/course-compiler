@@ -38,6 +38,12 @@ from course_compiler.course_job_persistence import (
     LocalCourseJobStore,
     open_course_job_store,
 )
+from tests.toolchain_support import (
+    POPPLER_AVAILABLE,
+    POPPLER_MISSING_REASON,
+    TEX_MISSING_REASON,
+    TEX_TOOLCHAIN_AVAILABLE,
+)
 from course_compiler.course_operations import attach_source, create_course
 from course_compiler.course_persistence import (
     CourseRecord,
@@ -330,6 +336,14 @@ class TestBuildOperations(unittest.TestCase):
         return course_id, job_id, "src-1"
 
     def _build(self, job_id: str):
+        # Every test reaching this helper performs a real XeLaTeX
+        # compile through build_pdf. Report a SKIP (not a failure) when
+        # the documented toolchain is absent; pure validation tests that
+        # never reach the compiler keep running normally.
+        if not TEX_TOOLCHAIN_AVAILABLE:
+            raise unittest.SkipTest(
+                f"real XeLaTeX build unavailable ({TEX_MISSING_REASON})"
+            )
         return build_pdf(
             job_id,
             job_store=self.job_store,
@@ -414,6 +428,10 @@ class TestBuildOperations(unittest.TestCase):
         assert isinstance(res, BuildOperationFailure)
         self.assertEqual(res.diagnostics[0].code, "workflow_not_completed")
 
+    @unittest.skipUnless(
+        TEX_TOOLCHAIN_AVAILABLE,
+        f"real XeLaTeX build unavailable ({TEX_MISSING_REASON})",
+    )
     def test_build_pdf_success_and_cache_miss_rederives(self) -> None:
         course_id, job_id, src_id = self._setup_completed_course("Build Test Course")
 
@@ -482,6 +500,10 @@ class TestBuildOperations(unittest.TestCase):
         self.assertTrue(cache_file.exists())
         self.assertEqual(cache_file.read_bytes(), art2)
 
+    @unittest.skipUnless(
+        TEX_TOOLCHAIN_AVAILABLE,
+        f"real XeLaTeX build unavailable ({TEX_MISSING_REASON})",
+    )
     def test_b3_crash_recovery_reconcile_job_build_projection(self) -> None:
         course_id, job_id, src_id = self._setup_completed_course("Crash Recovery Course")
 
@@ -812,6 +834,10 @@ class TestBuildOperations(unittest.TestCase):
             self.assertEqual(art, good)
             self.assertEqual(cache_file.read_bytes(), good)
 
+    @unittest.skipUnless(
+        POPPLER_AVAILABLE,
+        f"real Poppler preview/extraction unavailable ({POPPLER_MISSING_REASON})",
+    )
     def test_source_page_preview_and_region_extraction(self) -> None:
         course_id, job_id, src_id = self._setup_completed_course("Visual Source Course")
 
@@ -844,6 +870,10 @@ class TestBuildOperations(unittest.TestCase):
         self.assertEqual(extract_res.width_px, 50)
         self.assertEqual(extract_res.height_px, 50)
 
+    @unittest.skipUnless(
+        TEX_TOOLCHAIN_AVAILABLE,
+        f"real XeLaTeX build unavailable ({TEX_MISSING_REASON})",
+    )
     def test_get_artifact_history(self) -> None:
         course_id, job_id, src_id = self._setup_completed_course("History Test Course")
         history = get_artifact_history(job_id, build_store=self.build_store)

@@ -10,6 +10,8 @@ from dataclasses import FrozenInstanceError, fields
 from pathlib import Path
 from unittest import mock
 
+from tests.toolchain_support import POPPLER_AVAILABLE, POPPLER_MISSING_REASON
+
 import course_compiler
 import course_compiler.pdf_visual_extraction as extraction
 from course_compiler import (
@@ -502,6 +504,10 @@ class OutputIdentityAndFailureTests(ExtractionTestCase):
                 )
 
 
+@unittest.skipUnless(
+    POPPLER_AVAILABLE,
+    f"real Poppler extraction unavailable ({POPPLER_MISSING_REASON})",
+)
 class RealPopplerAndBoundaryTests(ExtractionTestCase):
     def test_real_poppler_vector_region_is_byte_deterministic(self) -> None:
         source = synthetic_vector_pdf()

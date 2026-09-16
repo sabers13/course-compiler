@@ -9,6 +9,15 @@ import unittest
 import urllib.error
 import urllib.request
 
+from tests.toolchain_support import (
+    MCP_MISSING_REASON,
+    UVICORN_MISSING_REASON,
+    require_optional_packages,
+)
+
+require_optional_packages("mcp", reason=MCP_MISSING_REASON)
+require_optional_packages("uvicorn", reason=UVICORN_MISSING_REASON)
+
 import uvicorn
 from mcp import Client
 

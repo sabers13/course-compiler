@@ -13,6 +13,13 @@ import time
 import unittest
 from pathlib import Path
 
+from tests.toolchain_support import (
+    POPPLER_AVAILABLE,
+    POPPLER_MISSING_REASON,
+    TEX_MISSING_REASON,
+    TEX_TOOLCHAIN_AVAILABLE,
+)
+
 from course_compiler.app.config import AppConfig, create_config
 from course_compiler.app.context import AppContext
 from course_compiler.app.server import create_server
@@ -74,6 +81,14 @@ class TestAppBuildEndpoints(unittest.TestCase):
         time.sleep(0.05)
         return srv, port, t
 
+    @unittest.skipUnless(
+        TEX_TOOLCHAIN_AVAILABLE,
+        f"real XeLaTeX build unavailable ({TEX_MISSING_REASON})",
+    )
+    @unittest.skipUnless(
+        POPPLER_AVAILABLE,
+        f"real Poppler preview/extraction unavailable ({POPPLER_MISSING_REASON})",
+    )
     def test_build_lifecycle_endpoints(self) -> None:
         with _isolated_tmp_dir() as tmp:
             server, port, thread = self._start_server(tmp)
@@ -208,6 +223,10 @@ class TestAppBuildEndpoints(unittest.TestCase):
                 server.server_close()
                 thread.join(timeout=2)
 
+    @unittest.skipUnless(
+        POPPLER_AVAILABLE,
+        f"real Poppler preview/extraction unavailable ({POPPLER_MISSING_REASON})",
+    )
     def test_source_read_boundaries_and_cross_course_rejection(self) -> None:
         """Preview/extraction reject wrong ids, bad pages, bad regions, and cross-course reads."""
 

@@ -12,6 +12,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from tests.toolchain_support import TEX_MISSING_REASON, TEX_TOOLCHAIN_AVAILABLE
+
 from course_compiler.build_operations import build_pdf
 from course_compiler.build_persistence import BuildRecord, open_build_record_store
 from course_compiler.course_operations import attach_source, create_course
@@ -208,6 +210,10 @@ class T053FastReviewAcceptanceTests(unittest.TestCase):
 
     # ----- Block A: full REVIEW/correction/review/build lifecycle proof -----
 
+    @unittest.skipUnless(
+        TEX_TOOLCHAIN_AVAILABLE,
+        f"real XeLaTeX build unavailable ({TEX_MISSING_REASON})",
+    )
     def test_course_c_review_correction_full_lifecycle_builds_successfully(self) -> None:
         """End-to-end: corrections verdict -> deterministic reopen ->
         semantic_correction -> validated accepted -> recompleted ->
@@ -357,6 +363,10 @@ class T053FastReviewAcceptanceTests(unittest.TestCase):
                               for r in self._state(job_id).operation_receipts), 0)
         return review, result
 
+    @unittest.skipUnless(
+        TEX_TOOLCHAIN_AVAILABLE,
+        f"real XeLaTeX build unavailable ({TEX_MISSING_REASON})",
+    )
     def test_course_d_real_crash_recovery_reopens_then_idempotent_resume(self) -> None:
         """Crash recovery through genuine store close + reopen + POST resume.
 

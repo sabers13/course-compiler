@@ -12,6 +12,12 @@ import unittest
 
 from course_compiler.app.config import create_config
 from course_compiler.app.server import create_server
+from tests.toolchain_support import (
+    POPPLER_AVAILABLE,
+    POPPLER_MISSING_REASON,
+    TEX_MISSING_REASON,
+    TEX_TOOLCHAIN_AVAILABLE,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 GUIDANCE = 'Prioritize parameter interpretation. Retain full coverage and solve exercises.\nUse explicit notation.'
@@ -166,6 +172,14 @@ class ProductParityTests(unittest.TestCase):
         self.assertTrue(gate['text'])
         return self.call('POST', f'/api/jobs/{self.job}/owner/{kind}', {'approve':True,'subject_sha256':gate['subject_sha256']})
 
+    @unittest.skipUnless(
+        TEX_TOOLCHAIN_AVAILABLE,
+        f"real XeLaTeX build unavailable ({TEX_MISSING_REASON})",
+    )
+    @unittest.skipUnless(
+        POPPLER_AVAILABLE,
+        f"real Poppler snippet rendering unavailable ({POPPLER_MISSING_REASON})",
+    )
     def test_representative_product_e2e(self):
         course = self.call('POST','/api/courses', {'title':'Invented mathematical course','ai_mode':'gpt','quality_mode':'fast','course_guidance':''},201)['course']
         cid = course['course_id']

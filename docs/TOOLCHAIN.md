@@ -8,8 +8,9 @@ Live install.
 ## Required
 
 - **Python 3.10+** on `PATH` as `python3`.
-- The application code uses only the Python standard library. No
-  third-party Python packages are required to run `make app`.
+- The core local web runtime is implemented with the Python standard
+  library and a vanilla HTML/CSS/JS frontend. No third-party Python
+  packages are required to run `make app`.
 
 ## Optional — for `make gate` and PDF compilation
 
@@ -28,7 +29,13 @@ The public gate and the synthetic XeLaTeX toolchain probe require:
 
 `requirements-mcp.txt` lists the official MCP Python SDK v2. It is
 **not** required for the v0.1 Local Developer Preview; install it
-only when exposing the app to a hosted / remote MCP client.
+only when exposing the app to a hosted / remote MCP client, or when
+you want the optional MCP integration tests to execute instead of
+skip:
+
+```bash
+pip install -r requirements-mcp.txt
+```
 
 ## Running the public validation gate
 
@@ -58,7 +65,13 @@ make test
 
 This runs every tracked unit and integration test under `tests/`.
 Tests use invented synthetic PDFs only; no real private course
-material is required or included.
+material is required or included. Optional integration/full-toolchain
+cases (MCP seam, real XeLaTeX compiles, Poppler rendering) skip
+cleanly — with the missing prerequisite named — when their documented
+prerequisites are unavailable, so a minimal clean clone still reports
+a truthful green suite. A present-but-broken dependency or toolchain
+still fails. Full PDF toolchain validation is performed by `make gate`
+on environments satisfying this document.
 
 ## Running the toolchain probe alone
 

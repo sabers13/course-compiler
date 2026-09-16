@@ -10,6 +10,8 @@ from dataclasses import FrozenInstanceError, fields
 from pathlib import Path
 from unittest import mock
 
+from tests.toolchain_support import POPPLER_AVAILABLE, POPPLER_MISSING_REASON
+
 import course_compiler
 import course_compiler.pdf_visual_extraction as extraction
 from course_compiler import (
@@ -471,6 +473,10 @@ class PreviewOutputAndFailureTests(PreviewTestCase):
                 render_pdf_page_preview(source, page_reference(source))
 
 
+@unittest.skipUnless(
+    POPPLER_AVAILABLE,
+    f"real Poppler rendering unavailable ({POPPLER_MISSING_REASON})",
+)
 class RealRendererAndBoundaryTests(PreviewTestCase):
     def test_real_rendering_is_deterministic_in_the_pinned_environment(self) -> None:
         source = synthetic_vector_pdf()

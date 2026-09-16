@@ -10,6 +10,8 @@ from dataclasses import FrozenInstanceError, replace
 from pathlib import Path
 from unittest import mock
 
+from tests.toolchain_support import TEX_MISSING_REASON, TEX_TOOLCHAIN_AVAILABLE
+
 from course_compiler import (
     ASSET_REFERENCE_VERSION,
     DOCUMENT_CONTRACT_VERSION,
@@ -1107,6 +1109,10 @@ class DependencyBoundaryTests(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
+@unittest.skipUnless(
+    TEX_TOOLCHAIN_AVAILABLE,
+    f"real XeLaTeX compile unavailable ({TEX_MISSING_REASON})",
+)
 class SyntheticRealCompileTests(unittest.TestCase):
     def test_composed_bundle_compiles_through_unchanged_compile_pdf_bundle(self) -> None:
         source = "# Title\n\nSome ordinary lecture prose.\n"

@@ -7,6 +7,15 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from tests.toolchain_support import (
+    MCP_MISSING_REASON,
+    require_optional_packages,
+)
+
+# course_compiler.mcp_runtime binds the MCP adapter, which requires the
+# optional MCP SDK at import time.
+require_optional_packages("mcp", reason=MCP_MISSING_REASON)
+
 from course_compiler.mcp_file_ingress import FileDownloadPolicy
 from course_compiler.mcp_runtime import (
     DATABASE_FILENAMES,

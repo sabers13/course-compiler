@@ -4,9 +4,14 @@ from pathlib import Path
 import subprocess
 import unittest
 
+from tests.toolchain_support import NODE_MISSING_REASON, node_available
+
 ROOT = Path(__file__).resolve().parents[1]
 
 class BrowserSemanticTests(unittest.TestCase):
+    @unittest.skipUnless(
+        node_available(), f"shipped JS comparison cannot execute ({NODE_MISSING_REASON})"
+    )
     def test_request_binding_comparison_is_app_owned_and_stale_safe(self):
         source = (ROOT/'course_compiler/app/static/app.js').read_text()
         start = source.index('  const GPT_REQUEST_IDENTITY_FIELDS')

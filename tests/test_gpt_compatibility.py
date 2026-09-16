@@ -12,7 +12,6 @@ UNSUPPORTED/AMBIGUOUS form -> deterministic fail-closed rejection.
 from __future__ import annotations
 
 import hashlib
-import shutil
 import unittest
 
 from course_compiler.math_format import (
@@ -26,8 +25,10 @@ from course_compiler.rendering import document_reference
 from course_compiler.assembly import assemble_course_tex
 from course_compiler.compilation import compile_pdf
 from course_compiler.snippet_contract import parse_snippets
+from tests.toolchain_support import TEX_MISSING_REASON, TEX_TOOLCHAIN_AVAILABLE
 
-_XELATEX_AVAILABLE = shutil.which("latexmk") is not None and shutil.which("xelatex") is not None
+_XELATEX_AVAILABLE = TEX_TOOLCHAIN_AVAILABLE
+_XELATEX_MISSING_REASON = TEX_MISSING_REASON
 
 
 def _render_and_assemble(markdown_source: str):
@@ -454,7 +455,7 @@ class SyntheticCrossFeatureLectureProfiles(unittest.TestCase):
         assembled = self._check_profile(self.PROFILE_C_PROSE_HEAVY)
         self.assertIn(r'\alpha', assembled.combined.tex_source)
 
-    @unittest.skipUnless(_XELATEX_AVAILABLE, 'latexmk/xelatex not available in this environment')
+    @unittest.skipUnless(_XELATEX_AVAILABLE, f'frozen XeLaTeX profile unavailable ({_XELATEX_MISSING_REASON})')
     def test_representative_profiles_compile_under_frozen_xelatex(self):
         for markdown_source in (self.PROFILE_A_MATH_HEAVY, self.PROFILE_B_CODE_HEAVY, self.PROFILE_C_PROSE_HEAVY):
             _, _, assembled = _render_and_assemble(markdown_source)
@@ -462,7 +463,7 @@ class SyntheticCrossFeatureLectureProfiles(unittest.TestCase):
             self.assertEqual(getattr(compiled, 'status', None), 'compiled', msg=getattr(compiled, 'diagnostics', compiled))
             self.assertTrue(compiled.pdf_content.startswith(b'%PDF'))
 
-    @unittest.skipUnless(_XELATEX_AVAILABLE, 'latexmk/xelatex not available in this environment')
+    @unittest.skipUnless(_XELATEX_AVAILABLE, f'frozen XeLaTeX profile unavailable ({_XELATEX_MISSING_REASON})')
     def test_compilation_is_byte_identical_across_repeated_runs(self):
         _, _, assembled = _render_and_assemble(self.PROFILE_A_MATH_HEAVY)
         first = compile_pdf(assembled.combined)

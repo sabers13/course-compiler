@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import hashlib
-import shutil
 import unittest
 
 from course_compiler.assembly import assemble_course_tex
@@ -12,9 +11,11 @@ from course_compiler.legacy_renderer import LegacyMarkdownTexRenderer
 from course_compiler.math_format import prepare_lecture_markdown
 from course_compiler.providers.chatgpt_relay import CONTRACT_PATH
 from course_compiler.rendering import document_reference
+from tests.toolchain_support import TEX_MISSING_REASON, TEX_TOOLCHAIN_AVAILABLE
 
 
-_COMPILER_AVAILABLE = shutil.which("latexmk") is not None and shutil.which("xelatex") is not None
+_COMPILER_AVAILABLE = TEX_TOOLCHAIN_AVAILABLE
+_COMPILER_MISSING_REASON = TEX_MISSING_REASON
 
 _DOMAIN_LECTURES = (
     r"""# Probability
@@ -106,7 +107,7 @@ class CrossDomainMathGrammarTests(unittest.TestCase):
             prepared_lectures.append(prepared)
         self.assertTrue(any(r"\[" in prepared for prepared in prepared_lectures))
 
-    @unittest.skipUnless(_COMPILER_AVAILABLE, "frozen XeLaTeX profile unavailable")
+    @unittest.skipUnless(_COMPILER_AVAILABLE, f"frozen XeLaTeX profile unavailable ({_COMPILER_MISSING_REASON})")
     def test_invented_cross_domain_lectures_render_assemble_and_compile(self) -> None:
         renderer = LegacyMarkdownTexRenderer()
         references, rendered = [], []
