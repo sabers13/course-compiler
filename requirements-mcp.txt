@@ -1,5 +1,10 @@
 # Official Model Context Protocol Python SDK v2.
-mcp>=2,<3
+# Exact pin (not a range): the MCP adapter's tool/schema surface
+# (including Tool output-schema shape asserted by
+# tests/test_mcp_adapter.py) is reviewed against 2.0.0 specifically.
+# A future 2.x release may change that surface; adopting it requires
+# re-running the MCP integration tests, same policy as httpcore below.
+mcp==2.0.0
 # Exact pin (not a range): the T033 connection-bound ("F2") egress path in
 # course_compiler/mcp_file_ingress.py is built directly on this exact
 # version's httpcore.NetworkBackend/NetworkStream public extension-point
