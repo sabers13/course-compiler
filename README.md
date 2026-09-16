@@ -126,6 +126,18 @@ After a page reload, the relay button reads **Resume in ChatGPT**. To exercise t
 | `--data-root PATH` | Data root (default `local-data/app`); must be inside `local-data/`, `local-artifacts/`, or `build/` |
 | `--allow-non-loopback` | Development-only override; non-loopback binds are refused without it |
 
+### If startup fails
+
+Startup diagnostics are fixed, content-safe codes:
+
+| Code | Meaning |
+| --- | --- |
+| `host_invalid` | The host value is malformed |
+| `host_not_loopback` | A non-loopback bind was requested without `--allow-non-loopback` |
+| `port_invalid` | The port is outside the allowed range |
+| `data_root_invalid` | The data root is missing or outside an approved ignored root |
+| `data_root_unavailable` | The data root could not be prepared, for example because of permissions |
+
 ### FAST vs REVIEW
 
 - **FAST** accepts generated content as final once generation completes.
@@ -139,14 +151,15 @@ Semantic Content Review is separate from Document Checks, which run in both mode
 
 - Source bytes, generated content, workflow state, and build records live under the git-ignored `local-data/` root. Caches and artifacts may use the git-ignored `local-artifacts/` and `build/` roots. The tracked repository never contains course material.
 - The app is loopback-only by default.
-- **GPT mode is not fully offline.** Nothing is uploaded automatically, but the evidence you attach to ChatGPT does leave your machine. The app keeps that transfer explicit and bounded.
+- **GPT mode is not fully offline.** The app does not automatically upload evidence to ChatGPT, but the evidence you download and attach yourself does leave your machine. The app keeps that transfer explicit and bounded.
 
 ---
 
 ## Current limitations
 
-- Local, single-user preview; no multi-user isolation, hosted deployment, or HTTPS.
-- ChatGPT relay only; bring-your-own-key providers are deferred.
+- v0.1 is not a production SaaS and not enterprise-ready. There is no hosted SaaS, multi-tenant, or hosted public HTTPS deployment.
+- Single-user only: no multi-user isolation, public submission, or official publication step.
+- ChatGPT relay only; BYOK (bring-your-own-key) providers are deferred to a future release.
 - Unusual formula or Markdown formatting in generated output can still require repair.
 - Public tests use invented synthetic PDFs only and never exercise private course material.
 
